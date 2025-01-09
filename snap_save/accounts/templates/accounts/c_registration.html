@@ -1,0 +1,241 @@
+{% extends 'photo_template/base.html' %}
+{% load custom_filters %}
+
+
+{% block title %}
+    Client Registration - SnapShare
+{% endblock title %}
+
+{% block css %}
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary-gradient: linear-gradient(135deg, #1a1f35 0%, #2a3149 100%);
+    --card-gradient: linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+    --accent-color: #5b8bf7;
+    --text-primary: #ffffff;
+    --text-secondary: rgba(255, 255, 255, 0.7);
+    --error-color: #ef4444;
+}
+
+body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    min-height: 100vh;
+    background: var(--primary-gradient);
+    color: var(--text-primary);
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* Animated Background */
+.animated-bg {
+    position: fixed;
+    width: 100vw;
+    height: 100vh;
+    z-index: -1;
+}
+
+.animated-bg::before,
+.animated-bg::after {
+    content: '';
+    position: absolute;
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    filter: blur(100px);
+    opacity: 0.15;
+    animation: float 10s infinite ease-in-out;
+}
+
+.animated-bg::before {
+    background: var(--accent-color);
+    top: -150px;
+    left: -150px;
+}
+
+.animated-bg::after {
+    background: #4a90e2;
+    bottom: -150px;
+    right: -150px;
+    animation-delay: -5s;
+}
+
+@keyframes float {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(50px, 50px); }
+}
+
+/* Registration Form */
+.registration-container {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+}
+
+.registration-card {
+    width: 100%;
+    max-width: 500px;
+    background: var(--card-gradient);
+    backdrop-filter: blur(20px);
+    border-radius: 24px;
+    padding: 3rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    animation: fadeIn 0.8s ease;
+}
+
+.registration-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+
+.registration-header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    background: linear-gradient(45deg, #fff, var(--accent-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.registration-header p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+.form-input {
+    width: 100%;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.submit-btn {
+    width: 100%;
+    padding: 1rem;
+    border: none;
+    border-radius: 12px;
+    background: var(--accent-color);
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.login-link {
+    text-align: center;
+    margin-top: 1.5rem;
+    color: var(--text-secondary);
+}
+
+.login-link a {
+    color: var(--accent-color);
+    text-decoration: none;
+    font-weight: 500;
+    margin-left: 0.5rem;
+}
+
+.login-link a:hover {
+    text-decoration: underline;
+}
+
+/* Error Styles */
+.error-message {
+    color: var(--error-color);
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+}
+
+.form-input.error {
+    border-color: var(--error-color);
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+    .registration-card {
+        padding: 2rem;
+        margin: 1rem;
+    }
+
+    .registration-header h1 {
+        font-size: 2rem;
+    }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+{% endblock css %}
+
+{% block content %}
+<div class="animated-bg"></div>
+<div class="registration-container">
+    <div class="registration-card">
+        <div class="registration-header">
+            <h1>Client Registration</h1>
+            <p>Join our community and start collecting memories</p>
+        </div>
+        
+        <form method="POST" class="registration-form">
+            {% csrf_token %}
+            
+            {% for field in form %}
+            <div class="form-group">
+                <label class="form-label" for="{{ field.id_for_label }}">
+                    {{ field.label }}
+                </label>
+                {{ field|addclass:"form-input" }}
+                {% if field.errors %}
+                    {% for error in field.errors %}
+                        <p class="error-message">{{ error }}</p>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            {% endfor %}
+            
+            <button type="submit" class="submit-btn">Create Client Account</button>
+            
+            <div class="login-link">
+                Already have an account?
+                <a href="{% url 'accounts:login' %}">Login here</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock content %}

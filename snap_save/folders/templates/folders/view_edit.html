@@ -1,0 +1,401 @@
+{% extends 'photo_template/base.html' %}
+
+{% block title %}
+    View/Edit Folders - SnapShare
+{% endblock title %}
+
+{% block css %}
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --primary: #4a90e2;
+    --secondary: #f8f9fa;
+    --accent: #2563eb;
+    --text-primary: #1a1a2e;
+    --text-secondary: #64748b;
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: #ffffff;
+    color: var(--text-primary);
+}
+
+
+/* Main Content */
+.content-wrapper {
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.page-header {
+    margin-bottom: 3rem;
+    position: relative;
+}
+
+.page-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    background: linear-gradient(45deg, var(--primary), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.search-bar {
+    position: relative;
+    max-width: 400px;
+    margin-bottom: 2rem;
+}
+
+.search-bar input {
+    width: 100%;
+    padding: 1rem 1.5rem;
+    padding-left: 3rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.search-bar input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: var(--shadow-sm);
+}
+
+.search-bar i {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+}
+
+/* Folder Grid */
+.folder-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.folder-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    border: 1px solid #e2e8f0;
+    position: relative;
+    overflow: hidden;
+}
+
+.folder-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary), var(--accent));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.folder-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+}
+
+.folder-card:hover::before {
+    opacity: 1;
+}
+
+.folder-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.folder-icon {
+    font-size: 1.8rem;
+    color: var(--primary);
+    margin-right: 1rem;
+}
+
+.folder-title {
+    font-weight: 600;
+    font-size: 1.2rem;
+    margin: 0;
+}
+
+.folder-info {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.folder-stats {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 0.75rem;
+    background: var(--secondary);
+    border-radius: 8px;
+}
+
+.stat-item {
+    flex: 1;
+    text-align: center;
+}
+
+.stat-value {
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.folder-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-action {
+    flex: 1;
+    padding: 0.5rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    background: white;
+    border: 1px solid #e2e8f0;
+    color: var(--text-primary);
+}
+
+.btn-action:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.btn-action i {
+    margin-right: 0.5rem;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    background: var(--secondary);
+    border-radius: 16px;
+    margin-top: 2rem;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    color: var(--primary);
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+    .content-wrapper {
+        padding: 1rem;
+    }
+
+    .folder-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .page-title {
+        font-size: 2rem;
+    }
+}
+
+{% endblock css %}
+
+{% block content %}
+    <!-- Main Content -->
+      <div class="content-wrapper">
+        <div class="page-header">
+            {% include 'photo_template/includes/alerts.html' %}
+            <h1 class="page-title mt-5">Manage Folders</h1>
+            <div class="search-bar">
+                <i class="fas fa-search"></i>
+                <input type="text" id="folderSearch" placeholder="Search folders..." value="{{ search_query }}">
+            </div>
+        </div>
+
+        <div id="foldersContainer">
+            {% if has_folders %}
+            <div class="folder-grid">
+                {% for folder in folders %}
+                <div class="folder-card">
+                    <div class="folder-header">
+                        <i class="fas fa-folder folder-icon"></i>
+                        <h3 class="folder-title">{{ folder.name }}</h3>
+                    </div>
+                    <div class="folder-info">
+                        Created on {{ folder.created_at|date:"F d, Y" }}
+                    </div>
+                    <div class="folder-stats">
+                        <div class="stat-item">
+                            <div class="stat-value">{{ folder.total_files }}</div>
+                            <div class="stat-label">Files</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">{{ folder.total_size }}</div>
+                            <div class="stat-label">Size</div>
+                        </div>
+                    </div>
+                    <div class="folder-actions">
+                        <button class="btn-action edit-folder" data-folder-id="{{ folder.id }}">
+                            <i class="fas fa-edit"></i>Edit
+                        </button>
+                        <button class="btn-action delete-folder" data-folder-id="{{ folder.id }}">
+                            <i class="fas fa-trash"></i>Delete
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                {% if search_query %}
+                    <i class="fas fa-search"></i>
+                    <h3>No folders found</h3>
+                    <p>No folders match your search "{{ search_query }}"</p>
+                    <button class="btn-action" onclick="clearSearch()">
+                        <i class="fas fa-times"></i>Clear Search
+                    </button>
+                {% else %}
+                    <i class="fas fa-folder-open"></i>
+                    <h3>No folders yet</h3>
+                    <p>Create your first folder to start organizing your photos</p>
+                    <a href="{% url 'folders:create_folder' %}" class="btn-action">
+                        <i class="fas fa-plus"></i>Create Folder
+                    </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Edit Folder Modal -->
+    <div class="modal" id="editFolderModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Folder</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form id="editFolderForm" method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="edit">
+                    <input type="hidden" name="folder_id" id="editFolderId">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>Folder Name</label>
+                            <input type="text" class="form-control" name="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Description</label>
+                            <textarea class="form-control" name="description"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Price</label>
+                            <input type="number" class="form-control" name="price" step="0.01" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">Save changes</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('folderSearch');
+            let searchTimeout;
+        
+            // Search functionality with debounce
+            searchInput.addEventListener('input', function(e) {
+                clearTimeout(searchTimeout);
+                const searchTerm = e.target.value;
+        
+                searchTimeout = setTimeout(() => {
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('search', searchTerm);
+        
+                    fetch(url, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById('foldersContainer').innerHTML = data.html;
+                        // Reinitialize event listeners for edit and delete buttons
+                        initializeEventListeners();
+                    });
+                }, 300); // Debounce delay of 300ms
+            });
+        
+            // Clear search function
+            window.clearSearch = function() {
+                searchInput.value = '';
+                searchInput.dispatchEvent(new Event('input'));
+            };
+        
+            // Initialize event listeners function
+            function initializeEventListeners() {
+                // Edit folder
+                document.querySelectorAll('.edit-folder').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const folderId = this.dataset.folderId;
+                        document.getElementById('editFolderId').value = folderId;
+                        $('#editFolderModal').modal('show');
+                    });
+                });
+        
+                // Delete folder
+                document.querySelectorAll('.delete-folder').forEach(button => {
+                    button.addEventListener('click', function() {
+                        if (confirm('Are you sure you want to delete this folder? This action cannot be undone.')) {
+                            const form = document.createElement('form');
+                            form.method = 'POST';
+                            form.innerHTML = `
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="delete">
+                                <input type="hidden" name="folder_id" value="${this.dataset.folderId}">
+                            `;
+                            document.body.appendChild(form);
+                            form.submit();
+                        }
+                    });
+                });
+            }
+        
+            // Initialize event listeners on page load
+            initializeEventListeners();
+        });
+        </script>
+{% endblock content %}

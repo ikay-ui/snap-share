@@ -1,0 +1,218 @@
+{% extends 'photo_template/base.html' %}
+
+{% block title %}
+Upload Files - SnapShare
+{% endblock title %}
+
+{% block css %}
+
+:root {
+    --primary: #4a90e2;
+    --primary-dark: #2563eb;
+    --background: #ffffff;
+    --surface: #ffffff;
+    --text: #1a1a2e;
+    --text-secondary: #64748b;
+    --border: #e2e8f0;
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--background);
+    color: var(--text);
+    min-height: 100vh;
+}
+
+.upload-container {
+    min-height: calc(100vh - 76px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+}
+
+.upload-card {
+    width: 100%;
+    max-width: 600px;
+    background: var(--surface);
+    border-radius: 24px;
+    padding: 3rem;
+    box-shadow: var(--shadow-lg);
+    animation: fadeIn 0.8s ease;
+}
+
+.upload-title {
+    font-size: clamp(2rem, 4vw, 2.5rem);
+    text-align: center;
+    margin-bottom: 2.5rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    background: linear-gradient(45deg, var(--text), var(--primary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    opacity: 0;
+    animation: fadeInUp 0.8s ease forwards;
+}
+
+.form-group {
+    margin-bottom: 2rem;
+    opacity: 0;
+    animation: fadeInUp 0.8s ease 0.2s forwards;
+}
+
+.form-label {
+    display: block;
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    color: var(--text);
+}
+
+.form-control {
+    width: 100%;
+    padding: 1rem 1.25rem;
+    font-size: 1rem;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    background: var(--background);
+    color: var(--text);
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: var(--shadow-sm);
+}
+
+.form-text {
+    display: block;
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.upload-btn {
+    width: 100%;
+    padding: 1rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: white;
+    background: linear-gradient(45deg, var(--primary), var(--primary-dark));
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    opacity: 0;
+    animation: fadeInUp 0.8s ease 0.4s forwards;
+}
+
+.upload-btn:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.upload-btn:disabled {
+    background: var(--text-secondary);
+    cursor: not-allowed;
+    transform: none;
+}
+
+.upload-btn i {
+    font-size: 1.2rem;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 768px) {
+    .upload-card {
+        padding: 2rem;
+        margin: 1rem;
+    }
+    
+    .upload-title {
+        margin-bottom: 2rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+}
+{% endblock css %}
+
+{% block content %}
+<main class="upload-container">
+    <div class="upload-card">
+        <h1 class="upload-title">{% if 'zip' in request.path %}Upload ZIP{% else %}Upload Files{% endif %}</h1>
+        <form id="upload-form" method="post" enctype="multipart/form-data" 
+              action="{% if 'zip' in request.path %}{% url 'folders:upload_zip' %}{% else %}{% url 'folders:upload_file' %}{% endif %}">
+            {% csrf_token %}
+            <div class="form-group">
+                <label class="form-label" for="id_folder">Select Folder</label>
+                {{ form.folder }}
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="{% if 'zip' in request.path %}id_zip_file{% else %}id_images{% endif %}">
+                    {% if 'zip' in request.path %}Choose ZIP File{% else %}Choose Images{% endif %}
+                </label>
+                {% if 'zip' in request.path %}
+                    {{ form.zip_file }}
+                {% else %}
+                    {{ form.images }}
+                    <small class="form-text">You can select multiple images</small>
+                {% endif %}
+            </div>
+            <button type="submit" class="upload-btn" id="upload-btn" disabled>
+                <i class="fas {% if 'zip' in request.path %}fa-file-archive{% else %}fa-images{% endif %}"></i>
+                {% if 'zip' in request.path %}Upload ZIP{% else %}Upload Images{% endif %}
+            </button>
+        </form>
+    </div>
+</main>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const folderInput = document.getElementById('id_folder');
+    const fileInput = document.getElementById('{% if "zip" in request.path %}id_zip_file{% else %}id_images{% endif %}');
+    const uploadBtn = document.getElementById('upload-btn');
+
+    function validateForm() {
+        if (folderInput.value && fileInput.files.length > 0) {
+            uploadBtn.disabled = false;
+        } else {
+            uploadBtn.disabled = true;
+        }
+    }
+
+    folderInput.addEventListener('change', validateForm);
+    fileInput.addEventListener('change', validateForm);
+});
+</script>
+{% endblock content %}

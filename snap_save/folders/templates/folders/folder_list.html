@@ -1,0 +1,51 @@
+{% if has_folders %}
+<div class="folder-grid">
+    {% for folder in folders %}
+    <div class="folder-card">
+        <div class="folder-header">
+            <i class="fas fa-folder folder-icon"></i>
+            <h3 class="folder-title">{{ folder.name }}</h3>
+        </div>
+        <div class="folder-info">
+            Created on {{ folder.created_at|date:"F d, Y" }}
+        </div>
+        <div class="folder-stats">
+            <div class="stat-item">
+                <div class="stat-value">{{ folder.total_files }}</div>
+                <div class="stat-label">Files</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ folder.total_size }}</div>
+                <div class="stat-label">Size</div>
+            </div>
+        </div>
+        <div class="folder-actions">
+            <button class="btn-action edit-folder" data-folder-id="{{ folder.id }}">
+                <i class="fas fa-edit"></i>Edit
+            </button>
+            <button class="btn-action delete-folder" data-folder-id="{{ folder.id }}">
+                <i class="fas fa-trash"></i>Delete
+            </button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    {% if search_query %}
+        <i class="fas fa-search"></i>
+        <h3>No folders found</h3>
+        <p>No folders match your search "{{ search_query }}"</p>
+        <button class="btn-action" onclick="clearSearch()">
+            <i class="fas fa-times"></i>Clear Search
+        </button>
+    {% else %}
+        <i class="fas fa-folder-open"></i>
+        <h3>No folders yet</h3>
+        <p>Create your first folder to start organizing your photos</p>
+        <a href="{% url 'create_folder' %}" class="btn-action">
+            <i class="fas fa-plus"></i>Create Folder
+        </a>
+    {% endif %}
+</div>
+{% endif %}

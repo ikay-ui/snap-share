@@ -1,0 +1,254 @@
+{% extends 'photo_template/base.html' %}
+
+{% block title %}
+    Contact Support - SnapShare
+{% endblock title %}
+
+{% block css %}
+
+:root {
+    --primary-dark: #2c1810;
+    --primary-light: #4a2a1d;
+    --accent-color: #ff7f50;
+    --text-color: #ffffff;
+    --glass-border: rgba(255, 255, 255, 0.2);
+    --glass-bg: rgba(255, 255, 255, 0.08);
+    --input-bg: rgba(44, 24, 16, 0.8);
+    --input-border: rgba(255, 127, 80, 0.3);
+}
+
+.support-container {
+    min-height: calc(100vh - 76px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+}
+
+.support-card {
+    width: 100%;
+    max-width: 800px;
+    background: rgba(44, 24, 16, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 30px;
+    padding: 3.5rem;
+    box-shadow: 
+        0 8px 32px 0 rgba(31, 38, 135, 0.37),
+        inset 0 0 100px rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    animation: fadeIn 0.8s ease;
+}
+
+.support-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.support-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    background: linear-gradient(45deg, #ff7f50, #ffd700);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.support-subtitle {
+    color: #ff7f50;
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.form-group {
+    margin-bottom: 2rem;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #ff7f50;
+    font-size: 1.1rem;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.form-input,
+.form-textarea,
+.form-select {
+    width: 100%;
+    padding: 1rem;
+    background: var(--input-bg);
+    border: 2px solid var(--input-border);
+    border-radius: 12px;
+    color: #ffffff;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-input::placeholder,
+.form-textarea::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.form-input:focus,
+.form-textarea:focus,
+.form-select:focus {
+    outline: none;
+    border-color: #ff7f50;
+    box-shadow: 0 0 0 3px rgba(255, 127, 80, 0.3);
+    background: rgba(44, 24, 16, 0.95);
+}
+
+.form-select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23ff7f50' viewBox='0 0 16 16'%3E%3Cpath d='M8 11.5l-6-6h12z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    padding-right: 2.5rem;
+}
+
+.form-select option {
+    background: var(--primary-dark);
+    color: #ffffff;
+    padding: 0.5rem;
+}
+
+.submit-btn {
+    width: 100%;
+    padding: 1rem;
+    background: #ff7f50;
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.submit-btn:hover {
+    transform: translateY(-2px);
+    background: #ff9770;
+    box-shadow: 0 5px 15px rgba(255, 127, 80, 0.3);
+}
+
+.submit-btn i {
+    font-size: 1.2rem;
+}
+
+.support-info {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 2px solid rgba(255, 127, 80, 0.3);
+    text-align: center;
+}
+
+.support-info h3 {
+    margin-bottom: 1rem;
+    color: #ff7f50;
+    font-size: 1.3rem;
+    font-weight: 600;
+}
+
+.support-info p {
+    color: #ff9770;
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.support-info a {
+    color: #ffd700;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.support-info a:hover {
+    color: #ff7f50;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 768px) {
+    .support-card {
+        padding: 2rem;
+        margin: 1rem;
+    }
+    
+    .support-title {
+        font-size: 2rem;
+    }
+}
+
+/* Error states */
+.form-input.is-invalid,
+.form-textarea.is-invalid,
+.form-select.is-invalid {
+    border-color: #ff4444;
+    background-color: rgba(255, 68, 68, 0.1);
+}
+
+.error-message {
+    color: #ff4444;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+}
+{% endblock %}
+
+{% block content %}
+<div class="support-container">
+    <div class="support-card">
+        {% include 'photo_template/includes/alerts.html' %}
+        
+        <div class="support-header">
+            <h1 class="support-title">Contact Support</h1>
+            <p class="support-subtitle">We're here to help! Fill out the form below and we'll get back to you as soon as possible.</p>
+        </div>
+
+        <form method="POST" action="{% url 'photo_template:contact_support' %}">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label class="form-label" for="id_subject">Subject</label>
+                {{ form.subject }}
+                {% if form.subject.errors %}
+                    <div class="error-message">{{ form.subject.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="id_priority">Priority</label>
+                {{ form.priority }}
+                {% if form.priority.errors %}
+                    <div class="error-message">{{ form.priority.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="id_message">Message</label>
+                {{ form.message }}
+                {% if form.message.errors %}
+                    <div class="error-message">{{ form.message.errors }}</div>
+                {% endif %}
+            </div>
+
+            <button type="submit" class="submit-btn">
+                <i class="fas fa-paper-plane"></i>
+                Submit Ticket
+            </button>
+        </form>
+
+        <div class="support-info">
+            <h3>Need Immediate Assistance?</h3>
+            <p>Email us directly at <a href="mailto:ikayumar01@gmail.com">ikayumar01@gmail.com</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,175 @@
+{% extends 'photo_template/base.html' %}
+
+{% block title %}
+    Photographer Dashboard - SnapShare
+{% endblock title %}
+
+
+{% block css %}
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary-dark: #1a1a2e;
+    --primary-light: #2a2a45;
+    --accent-color: #4a90e2;
+    --text-color: #ffffff;
+    --glass-border: rgba(255, 255, 255, 0.2);
+    --glass-bg: rgba(255, 255, 255, 0.08);
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    min-height: 100vh;
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary-light));
+    color: var(--text-color);
+}
+
+
+/* Dashboard Styles */
+.dashboard-container {
+    min-height: calc(100vh - 76px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+}
+
+.dashboard {
+    width: 100%;
+    max-width: 1200px;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    border-radius: 30px;
+    padding: 3.5rem;
+    box-shadow: 
+        0 8px 32px 0 rgba(31, 38, 135, 0.37),
+        inset 0 0 100px rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    animation: fadeIn 0.8s ease;
+}
+
+h1 {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    text-align: center;
+    margin-bottom: 3.5rem;
+    font-weight: 700;
+    letter-spacing: -1px;
+    background: linear-gradient(45deg, #fff, var(--accent-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    opacity: 0;
+    animation: fadeInUp 0.8s ease forwards;
+}
+
+.button-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2.5rem;
+    opacity: 0;
+    animation: fadeInUp 0.8s ease 0.2s forwards;
+}
+
+.btn {
+    position: relative;
+    padding: 2rem;
+    border: none;
+    border-radius: 20px;
+    background: var(--glass-bg);
+    color: var(--text-color);
+    font-size: 1.2rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--glass-border);
+}
+
+.btn:hover {
+    transform: translateY(-8px);
+    background: rgba(74, 144, 226, 0.2);
+    border-color: var(--accent-color);
+    box-shadow: 0 10px 20px rgba(74, 144, 226, 0.2);
+}
+
+.btn i {
+    margin-right: 12px;
+    font-size: 1.4rem;
+    color: var(--accent-color);
+    transition: transform 0.3s ease;
+}
+
+.btn:hover i {
+    transform: scale(1.2);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard {
+        padding: 2rem;
+        margin: 1rem;
+    }
+    
+    .button-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .btn {
+        padding: 1.5rem;
+        font-size: 1.1rem;
+    }
+
+    h1 {
+        margin-bottom: 2.5rem;
+    }
+}
+
+{% endblock css %}
+
+{% block content %}
+    <!-- Dashboard -->
+    <div class="dashboard-container">
+        <main class="dashboard">
+            {% include 'photo_template/includes/alerts.html' %}
+            <h1 class="">Photographer Dashboard</h1>
+            <div class="button-grid">
+                <a href="{% url 'folders:create_folder' %}" class="btn">
+                    <i class="fas fa-folder-plus"></i>
+                    Create Folder
+                </a>
+                <a href="{% url 'folders:upload_images' %}" class="btn">
+                    <i class="fas fa-upload"></i>
+                    Upload Images
+                </a>
+                <a href="{% url 'folders:view_edit' %}" class="btn">
+                    <i class="fas fa-edit"></i>
+                    View/Edit Folders
+                </a>
+            </div>
+        </main>
+    </div>
+{% endblock content %}

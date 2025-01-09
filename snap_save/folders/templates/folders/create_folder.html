@@ -1,0 +1,230 @@
+{% extends 'photo_template/base.html' %}
+
+{% block title %}
+Create Folder - SnapShare
+{% endblock title %}
+
+{% block css %}
+
+body {
+    background-color: #ffffff;
+    font-family: 'Poppins', sans-serif;
+    min-height: 100vh;
+    color: #111827;
+}
+
+.create-folder-container {
+    min-height: calc(100vh - 76px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+}
+
+.create-folder-card {
+    width: 100%;
+    max-width: 560px;
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 2.5rem;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    animation: slideUp 0.6s ease-out;
+}
+
+.page-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #111827;
+    text-align: center;
+    margin-bottom: 2rem;
+    letter-spacing: -0.025em;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 0.5rem;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 0.975rem;
+    line-height: 1.5;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    background: #F9FAFB;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #2563EB;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    background: #ffffff;
+}
+
+textarea.form-control {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.submit-btn {
+    width: 100%;
+    padding: 0.875rem 1.5rem;
+    font-size: 0.975rem;
+    font-weight: 500;
+    color: #ffffff;
+    background: #2563EB;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.submit-btn:hover {
+    background: #1D4ED8;
+    transform: translateY(-1px);
+}
+
+.submit-btn:active {
+    transform: translateY(0);
+}
+
+.token-section {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #E5E7EB;
+}
+
+.token-container {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.token-input {
+    flex-grow: 1;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    background: #F9FAFB;
+    color: #374151;
+}
+
+.copy-btn {
+    padding: 0.75rem 1rem;
+    background: #F3F4F6;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    color: #374151;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.copy-btn:hover {
+    background: #E5E7EB;
+}
+
+.copy-btn i {
+    font-size: 1rem;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.alert {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+}
+
+.alert-success {
+    background: #ECFDF5;
+    color: #065F46;
+    border: 1px solid #A7F3D0;
+}
+
+.alert-error {
+    background: #FEF2F2;
+    color: #991B1B;
+    border: 1px solid #FECACA;
+}
+
+@media (max-width: 640px) {
+    .create-folder-card {
+        padding: 1.5rem;
+        margin: 1rem;
+    }
+    
+    .page-title {
+        font-size: 1.5rem;
+    }
+}
+{% endblock css %}
+
+{% block content %}
+<div class="create-folder-container">
+    <main class="create-folder-card">
+        {% include 'photo_template/includes/alerts.html' %}
+        <h1 class="page-title">Create New Folder</h1>
+        
+        <form action="{% url 'folders:create_folder' %}" method="POST">
+            {% csrf_token %}
+            <div class="form-group">
+                <label class="form-label" for="{{ form.name.id_for_label }}">Folder Name</label>
+                {{ form.name }}
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="{{ form.description.id_for_label }}">Description</label>
+                {{ form.description }}
+            </div>
+            <button type="submit" class="submit-btn">
+                Create Folder
+            </button>
+        </form>
+
+        {% if token %}
+        <div class="token-section">
+            <label class="form-label">Folder Token</label>
+            <div class="token-container">
+                <input type="text" id="folderToken" class="token-input" value="{{ token }}" readonly>
+                <button class="copy-btn" onclick="copyToken()" aria-label="Copy token">
+                    <i class="fas fa-clipboard"></i>
+                </button>
+            </div>
+        </div>
+        {% endif %}
+    </main>
+</div>
+
+<script>
+function copyToken() {
+    const copyText = document.getElementById("folderToken");
+    copyText.select();
+    copyText.setSelectionRange(0, 99999);
+    document.execCommand("copy");
+    
+    const copyBtn = document.querySelector('.copy-btn i');
+    copyBtn.className = 'fas fa-check';
+    setTimeout(() => {
+        copyBtn.className = 'fas fa-clipboard';
+    }, 2000);
+}
+</script>
+{% endblock content %}

@@ -1,0 +1,267 @@
+{% extends 'photo_template/base.html' %}
+
+{% block title %}
+    My Favorites - SnapShare
+{% endblock title %}
+
+{% block css %}
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700&display=swap');
+
+:root {
+    --primary-dark: #1a1a2e;
+    --primary-light: #16213e;
+    --accent: #ff6b6b;
+    --accent-hover: #ff8585;
+}
+
+body {
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary-light));
+    font-family: 'Poppins', sans-serif;
+    color: #fff;
+    min-height: 100vh;
+}
+
+.favorites-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.favorites-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    animation: fadeIn 0.8s ease;
+}
+
+.favorites-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    background: linear-gradient(45deg, #ff6b6b, #ffd93d);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.favorites-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2rem;
+    animation: fadeInUp 0.8s ease;
+}
+
+.favorite-card {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.favorite-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--accent);
+    box-shadow: 0 10px 20px rgba(255, 107, 107, 0.1);
+}
+
+.card-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.folder-name {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.folder-date {
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.card-preview {
+    aspect-ratio: 16/9;
+    background: rgba(0, 0, 0, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.preview-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2px;
+    height: 100%;
+}
+
+.preview-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.card-actions {
+    padding: 1.5rem;
+    display: flex;
+    gap: 1rem;
+}
+
+.btn {
+    flex: 1;
+    padding: 0.75rem;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    text-decoration: none;
+}
+
+.btn-view {
+    background: #4361ee;
+    color: white;
+}
+
+.btn-remove {
+    background: #ff6b6b;
+    color: white;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    margin-top: 2rem;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    color: var(--accent);
+    margin-bottom: 1.5rem;
+}
+
+.empty-state h3 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.empty-state p {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 768px) {
+    .favorites-container {
+        padding: 1rem;
+    }
+    
+    .favorites-title {
+        font-size: 2rem;
+    }
+    
+    .favorites-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+}
+{% endblock %}
+
+{% block content %}
+<div class="favorites-container">
+    {% csrf_token %}
+    {% include 'photo_template/includes/alerts.html' %}
+    
+    <div class="favorites-header">
+        <h1 class="favorites-title">My Favorite Folders</h1>
+    </div>
+    
+    {% if favorites %}
+    <div class="favorites-grid">
+        {% for favorite in favorites %}
+        <div class="favorite-card">
+            <div class="card-header">
+                <h2 class="folder-name">{{ favorite.folder.name }}</h2>
+                <div class="folder-date">Added {{ favorite.added_at|date:"M d, Y" }}</div>
+            </div>
+            
+            <div class="card-preview">
+                <div class="preview-grid">
+                    {% for image in favorite.folder.uploadfile_set.all|slice:":4" %}
+                        <img src="{{ image.image.url }}" alt="Preview" class="preview-image">
+                    {% empty %}
+                        <div class="preview-image" style="background: rgba(255,255,255,0.05);">
+                            <i class="fas fa-image"></i>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <div class="card-actions">
+                <a href="{% url 'photo_template:view_all' favorite.folder.id %}" class="btn btn-view">
+                    <i class="fas fa-eye"></i>
+                    View All
+                </a>
+                <button class="btn btn-remove" onclick="toggleFavorite({{ favorite.folder.id }}, this)">
+                    <i class="fas fa-heart-broken"></i>
+                    Remove
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-heart"></i>
+        <h3>No Favorites Yet</h3>
+        <p>Start adding folders to your favorites to see them here!</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function toggleFavorite(folderId, button) {
+    fetch(`/toggle-favorite/${folderId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'removed') {
+            button.closest('.favorite-card').remove();
+            
+            // Check if there are any favorites left
+            if (document.querySelectorAll('.favorite-card').length === 0) {
+                location.reload(); // Reload to show empty state
+            }
+        }
+    });
+}
+</script>
+{% endblock %}

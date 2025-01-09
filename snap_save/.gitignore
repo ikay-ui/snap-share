@@ -1,0 +1,6 @@
+venv/
+media/
+.env
+*.sqlite3
+
+
