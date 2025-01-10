@@ -29,7 +29,6 @@ def register_photographer(request):
                 last_name = form.cleaned_data['last_name']
                 email = form.cleaned_data['email']
                 phone_number = form.cleaned_data['phone_number']
-                bank_number = form.cleaned_data['bank_number']
                 password = form.cleaned_data['password']
                 
                 username = email.split('@')[0]
@@ -39,7 +38,6 @@ def register_photographer(request):
                 
                 # Save additional fields
                 user.phone_number = phone_number
-                user.bank_number = bank_number
                 user.save()
                 
                 # Call the function to send activation link
@@ -70,7 +68,6 @@ def register_client(request):
                 first_name = form.cleaned_data['first_name']
                 last_name = form.cleaned_data['last_name']
                 email = form.cleaned_data['email']
-                phone_number= form.cleaned_data['phone_number']
                 password = form.cleaned_data['password']
                 
                 username = email.split('@')[0]
@@ -78,7 +75,6 @@ def register_client(request):
                 # now after this, a user will be created
                 user = Account.objects.create_user(first_name=first_name, last_name=last_name, email=email, username=username, password=password)
                 # now after all this been created, then assigned the phone number to the phone number field in the database
-                user.phone_number = phone_number
                 user.save()
                 
                 # now we call the send_activation link to send email to our user
