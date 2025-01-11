@@ -163,3 +163,138 @@ def upload_zip(request):
         'form': form
     }
     return render(request, 'folders/upload.html', context)
+
+
+
+def get_folder_size(folder):
+    """Calculate total size of folder including images and zip files"""
+
+    # Get size of all images
+    images = UploadFile.objects.filter(folder=folder)
+    image_size = 0
+    for image in images:
+        try:
+            # Get the Cloudinary URL for the image
+            url = cloudinary_url(image.image.public_id)[0]
+            # Make a HEAD request to get the content length
+            response = requests.head(url)
+            if 'content-length' in response.headers:
+                image_size += int(response.headers['content-length'])
+        except Exception as e:
+            print(f"Error getting size for image {image.image.public_id}: {e}")
+            continue
+
+    # Get size of all zip files
+    zip_files = UploadZip.objects.filter(folder=folder)
+    zip_size = 0
+    for zip_file in zip_files:
+        try:
+            # Get the Cloudinary URL for the zip file
+            url = cloudinary_url(zip_file.zip_file.public_id)[0]
+            # Make a HEAD request to get the content length
+            response = requests.head(url)
+            if 'content-length' in response.headers:
+                zip_size += int(response.headers['content-length'])
+        except Exception as e:
+            print(f"Error getting size for zip file {zip_file.zip_file.public_id}: {e}")
+            continue
+    
+    total_size = image_size + zip_size
+    
+    # Convert to appropriate unit
+    if total_size < 1024:
+        return f"{total_size}B"
+    elif total_size < 1024**2:
+        return f"{total_size/1024:.1f}KB"
+    elif total_size < 1024**3:
+        return f"{total_size/(1024**2):.1f}MB"
+    return f"{total_size/(1024**3):.1f}GB"
+
+
+@login_required
+@photographer_required
+def view_edit(request):
+    if request.method == "POST":
+        action = request.POST.get('action')
+        folder_id = request.POST.get('folder_id')
+        
+        if not folder_id:
+            return JsonResponse({'status': 'error', 'message': 'Folder ID required'})
+            
+        folder = get_object_or_404(Folder, id=folder_id)
+        
+        # Verify ownership
+        if folder.owner != request.user:
+            raise PermissionDenied
+        
+        if action == "edit":
+            new_name = request.POST.get('name')
+            new_description = request.POST.get('description')
+            
+            if new_name:
+                folder.name = new_name
+            if new_description:
+                folder.description = new_description
+                
+            folder.save()
+            messages.success(request, 'Folder updated successfully!')
+            
+        elif action == "delete":
+            # Delete associated files from Cloudinary
+            upload_files = UploadFile.objects.filter(folder=folder)
+            for file in upload_files:
+                if file.image:
+                    cloudinary.uploader.destroy(file.image.public_id)
+                    
+            zip_files = UploadZip.objects.filter(folder=folder)
+            for zip_file in zip_files:
+                if zip_file.zip_file:
+                    cloudinary.uploader.destroy(zip_file.zip_file.public_id)
+                    
+            folder.delete()
+            messages.success(request, 'Folder deleted successfully!')
+            
+        return redirect('folders:view_edit')
+    
+    # Get search query
+    search_query = request.GET.get('search', '').strip()
+    
+    # Get all folders for the logged-in photographer with optional search
+    folders = Folder.objects.filter(owner=request.user)
+    if search_query:
+        folders = folders.filter(
+            Q(name__icontains=search_query) |
+            Q(description__icontains=search_query)
+        )
+    folders = folders.order_by('-created_at')
+    
+    # Prepare folder data with additional information
+    folders_data = []
+    for folder in folders:
+        folder_data = {
+            'id': folder.id,
+            'name': folder.name,
+            'created_at': folder.created_at,
+            'description': folder.description,
+            'total_files': (
+                UploadFile.objects.filter(folder=folder).count() +
+                UploadZip.objects.filter(folder=folder).count()
+            ),
+            'total_size': get_folder_size(folder)
+        }
+        folders_data.append(folder_data)
+    
+    context = {
+        'folders': folders_data,
+        'has_folders': bool(folders_data),
+        'search_query': search_query
+    }
+    
+    # If it's an AJAX request, return JSON response
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({
+            'html': render(request, 'folders/folder_list.html', context).content.decode(),
+            'has_folders': bool(folders_data)
+        })
+    
+    return render(request, 'folders/view_edit.html', context)
