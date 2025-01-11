@@ -6,7 +6,7 @@ body {
   }
 
   .hero {
-    background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://loremflickr.com/1200/600/camera');
+    background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://picsum.photos/1200/600?random');
     background-size: cover;
     background-position: center;
     height: 100vh;

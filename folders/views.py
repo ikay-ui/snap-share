@@ -119,7 +119,7 @@ def upload_file(request):
             if error_count > 0:
                 messages.warning(request, f'Failed to upload {error_count} files')
                 
-            return redirect('folders:p_dashboard')
+            return redirect('photo_template:p_dashboard')
     else:
         form = UploadFileForm()
 
@@ -151,7 +151,7 @@ def upload_zip(request):
                 zip_instance.save()
                 
                 messages.success(request, 'ZIP file uploaded successfully')
-                return redirect('folders:p_dashboard')
+                return redirect('photo_template:p_dashboard')
                 
             except CloudinaryError as e:
                 messages.error(request, f'Error uploading ZIP file: {str(e)}')
