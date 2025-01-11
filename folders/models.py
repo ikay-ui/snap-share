@@ -5,6 +5,7 @@ from django.utils import timezone
 from datetime import timedelta
 import uuid
 from cloudinary.models import CloudinaryField
+from cloudinary.utils import cloudinary_url
 # Create your models here.
 
 
@@ -62,6 +63,22 @@ class UploadFile(models.Model):
                           folder='images_uploaded',  # This sets the folder in Cloudinary
                           resource_type='auto')      # Auto-detect resource type
     date_added = models.DateTimeField(auto_now_add=True)
+
+    def get_image_url(self):
+        """Return the proper Cloudinary URL for the image"""
+        try:
+            url, options = cloudinary_url(self.image.public_id,
+                                        format=self.image.format,
+                                        crop="fill",
+                                        width=500,
+                                        height=500)
+            return url
+        except Exception as e:
+            print(f"Error generating Cloudinary URL: {e}")
+            return None
+
+    def __str__(self):
+        return f"Image {self.id} in {self.folder.name}"
     
     # def __str__(self):
     #     return str(self.image)
