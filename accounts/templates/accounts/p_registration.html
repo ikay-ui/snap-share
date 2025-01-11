@@ -183,15 +183,54 @@ body {
     border-color: var(--error-color);
 }
 
-/* Responsive Design */
-@media (max-width: 640px) {
+/* Form Layout Updates */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+/* Create a grid layout for form groups */
+.registration-form {
+    display: block;
+}
+
+@media (min-width: 768px) {
+    .registration-form {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+    }
+
+    /* Full width elements */
+    .registration-form .form-group.full-width {
+        grid-column: 1 / -1;
+    }
+
+    /* Make button container full width */
+    .registration-form .submit-container {
+        grid-column: 1 / -1;
+    }
+
+    /* Make login link container full width */
+    .registration-form .login-link {
+        grid-column: 1 / -1;
+    }
+
+    /* Adjust card width for the new layout */
+    .registration-card {
+        max-width: 800px;
+        padding: 3rem;
+    }
+}
+
+/* Update responsive styles */
+@media (max-width: 767px) {
     .registration-card {
         padding: 2rem;
         margin: 1rem;
     }
 
-    .registration-header h1 {
-        font-size: 2rem;
+    .form-group {
+        margin-bottom: 1.5rem;
     }
 }
 
@@ -214,7 +253,7 @@ body {
             {% csrf_token %}
             
             {% for field in form %}
-            <div class="form-group">
+            <div class="form-group {% if field.field.widget.input_type == 'password' or field.field.widget.input_type == 'email' %}full-width{% endif %}">
                 <label class="form-label" for="{{ field.id_for_label }}">
                     {{ field.label }}
                 </label>
@@ -227,7 +266,9 @@ body {
             </div>
             {% endfor %}
             
-            <button type="submit" class="submit-btn">Create Photographer Account</button>
+            <div class="submit-container">
+                <button type="submit" class="submit-btn">Create Account</button>
+            </div>
             
             <div class="login-link">
                 Already have an account?
