@@ -14,6 +14,8 @@ import zipfile
 from django.http import HttpResponse
 from io import BytesIO
 import cloudinary
+import cloudinary.uploader
+import cloudinary.api
 import requests
 # Create your views here.
 

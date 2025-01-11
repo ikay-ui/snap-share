@@ -13,6 +13,7 @@ from django.core.exceptions import PermissionDenied
 import cloudinary
 from cloudinary.utils import cloudinary_url
 import cloudinary.uploader
+import cloudinary.api
 from cloudinary.exceptions import Error as CloudinaryError
 import requests
 from django.http import JsonResponse
