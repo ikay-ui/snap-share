@@ -13,6 +13,8 @@ import os
 import zipfile
 from django.http import HttpResponse
 from io import BytesIO
+import cloudinary
+import requests
 # Create your views here.
 
 
@@ -73,25 +75,47 @@ def view_all(request, folder_id):
     return render(request, 'photo_template/view_all.html', context)
 
 def download_all(request, folder_id):
-    # get the folder or return 404 status
     folder = get_object_or_404(Folder, id=folder_id)
-
-    # create a BytesIO buffer to store the zip file
     buffer = BytesIO()
-
-     # Create the zip file
+    
     with zipfile.ZipFile(buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-        # Add all images from UploadFile
+        # Download and add images
         for upload in folder.uploadfile_set.all():
-            file_path = upload.image.path
-            arc_name = os.path.basename(file_path)
-            zip_file.write(file_path, arc_name)
-            
-        # Add all ZIP files from UploadZip
+            try:
+                # Get the Cloudinary URL
+                resource = cloudinary.api.resource(upload.image.public_id)
+                url = resource['secure_url']
+                
+                # Download the file
+                response = requests.get(url)
+                if response.status_code == 200:
+                    # Add to zip with original filename or public_id as fallback
+                    filename = resource.get('original_filename', 
+                                         os.path.basename(upload.image.public_id))
+                    zip_file.writestr(filename, response.content)
+                    
+            except Exception as e:
+                print(f"Error downloading {upload.image.public_id}: {str(e)}")
+                continue
+        
+        # Download and add ZIP files
         for zip_upload in folder.uploadzip_set.all():
-            file_path = zip_upload.zip_file.path
-            arc_name = os.path.basename(file_path)
-            zip_file.write(file_path, arc_name)
+            try:
+                # Get the Cloudinary URL
+                resource = cloudinary.api.resource(zip_upload.zip_file.public_id)
+                url = resource['secure_url']
+                
+                # Download the file
+                response = requests.get(url)
+                if response.status_code == 200:
+                    # Add to zip with original filename or public_id as fallback
+                    filename = resource.get('original_filename',
+                                         os.path.basename(zip_upload.zip_file.public_id))
+                    zip_file.writestr(filename, response.content)
+                    
+            except Exception as e:
+                print(f"Error downloading {zip_upload.zip_file.public_id}: {str(e)}")
+                continue
     
     # Prepare response
     buffer.seek(0)

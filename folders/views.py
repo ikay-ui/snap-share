@@ -12,6 +12,8 @@ from .reused_func import send_token
 from django.core.exceptions import PermissionDenied
 import cloudinary
 from cloudinary.utils import cloudinary_url
+import cloudinary.uploader
+from cloudinary.exceptions import Error as CloudinaryError
 import requests
 from django.http import JsonResponse
 
@@ -78,15 +80,45 @@ def upload_file(request):
         form = UploadFileForm(request.POST, request.FILES)
         if form.is_valid():
             folder = form.cleaned_data['folder']
-            files = form.cleaned_data['images']
-
+            files = request.FILES.getlist('images')
+            
+            success_count = 0
+            error_count = 0
+            
             for file in files:
-                UploadFile.objects.create(owner=request.user, folder=folder, image=file)
-
-            # return JsonResponse({'success': True})  # Return JSON response
+                try:
+                    # Create the upload file instance
+                    upload = UploadFile(
+                        owner=request.user,
+                        folder=folder
+                    )
+                    
+                    # Explicitly handle the Cloudinary upload
+                    upload_result = cloudinary.uploader.upload(
+                        file,
+                        folder=f'images_uploaded/{folder.id}',
+                        resource_type='auto'
+                    )
+                    
+                    # Assign the Cloudinary resource to the model
+                    upload.image = upload_result['public_id']
+                    upload.save()
+                    
+                    success_count += 1
+                    
+                except CloudinaryError as e:
+                    error_count += 1
+                    messages.error(request, f'Error uploading {file.name}: {str(e)}')
+                except Exception as e:
+                    error_count += 1
+                    messages.error(request, f'Unexpected error uploading {file.name}: {str(e)}')
+            
+            if success_count > 0:
+                messages.success(request, f'Successfully uploaded {success_count} files')
+            if error_count > 0:
+                messages.warning(request, f'Failed to upload {error_count} files')
+                
             return redirect('folders:p_dashboard')
-        else:
-            return redirect('folders:upload_file')
     else:
         form = UploadFileForm()
 
@@ -95,165 +127,39 @@ def upload_file(request):
     }
     return render(request, 'folders/upload.html', context)
 
-
 @login_required
 @photographer_required
 def upload_zip(request):
-    if request.method != 'POST':
-        # return the form back to the user
-        form = UploadZipForm()
-    
-    else:
-        form = UploadZipForm(request.POST, request.FILES) #Initializing the form with the POST data and uploaded
-        # checking if the form is valid
+    if request.method == 'POST':
+        form = UploadZipForm(request.POST, request.FILES)
         if form.is_valid():
             try:
-                zip_instance = form.save(commit=False) #saving the form but not committing to the database yet
-                zip_instance.owner = request.user # Setting the owner of the ZIP file to the current user
-                zip_instance.save() # Saving the ZIP file instance to the database
+                # Create but don't save the instance yet
+                zip_instance = form.save(commit=False)
+                zip_instance.owner = request.user
                 
-                return redirect('folders:upload_zip')
-            except:
-                pass
-    context = {
-        'form':form
-    }        
-    return render(request, 'folders/upload.html', context)
-
-
-
-def get_folder_size(folder):
-    """Calculate total size of folder including images and zip files"""
-
-    # Get size of all images
-    images = UploadFile.objects.filter(folder=folder)
-    image_size = 0
-    for image in images:
-        try:
-            # Get the Cloudinary URL for the image
-            url = cloudinary_url(image.image.public_id)[0]
-            # Make a HEAD request to get the content length
-            response = requests.head(url)
-            if 'content-length' in response.headers:
-                image_size += int(response.headers['content-length'])
-        except Exception as e:
-            print(f"Error getting size for image {image.image.public_id}: {e}")
-            continue
-
-    # Get size of all zip files
-    zip_files = UploadZip.objects.filter(folder=folder)
-    zip_size = 0
-    for zip_file in zip_files:
-        try:
-            # Get the Cloudinary URL for the zip file
-            url = cloudinary_url(zip_file.zip_file.public_id)[0]
-            # Make a HEAD request to get the content length
-            response = requests.head(url)
-            if 'content-length' in response.headers:
-                zip_size += int(response.headers['content-length'])
-        except Exception as e:
-            print(f"Error getting size for zip file {zip_file.zip_file.public_id}: {e}")
-            continue
-    
-    total_size = image_size + zip_size
-    
-    # Convert to appropriate unit
-    if total_size < 1024:
-        return f"{total_size}B"
-    elif total_size < 1024**2:
-        return f"{total_size/1024:.1f}KB"
-    elif total_size < 1024**3:
-        return f"{total_size/(1024**2):.1f}MB"
-    return f"{total_size/(1024**3):.1f}GB"
-
-
-@login_required
-@photographer_required
-def view_edit(request):
-    if request.method == "POST":
-        action = request.POST.get('action')
-        folder_id = request.POST.get('folder_id')
-        
-        if not folder_id:
-            return JsonResponse({'status': 'error', 'message': 'Folder ID required'})
-            
-        folder = get_object_or_404(Folder, id=folder_id)
-        
-        # Verify ownership
-        if folder.owner != request.user:
-            raise PermissionDenied
-        
-        if action == "edit":
-            new_name = request.POST.get('name')
-            new_description = request.POST.get('description')
-            new_price = request.POST.get('price')
-            
-            if new_name:
-                folder.name = new_name
-            if new_description:
-                folder.description = new_description
-            if new_price:
-                folder.price = new_price
+                # Explicitly handle Cloudinary upload
+                upload_result = cloudinary.uploader.upload(
+                    request.FILES['zip_file'],
+                    folder=f'zip_files/{zip_instance.folder.id}',
+                    resource_type='auto'
+                )
                 
-            folder.save()
-            messages.success(request, 'Folder updated successfully!')
-            
-        elif action == "delete":
-            # Delete associated files from Cloudinary
-            upload_files = UploadFile.objects.filter(folder=folder)
-            for file in upload_files:
-                if file.image:
-                    cloudinary.uploader.destroy(file.image.public_id)
-                    
-            zip_files = UploadZip.objects.filter(folder=folder)
-            for zip_file in zip_files:
-                if zip_file.zip_file:
-                    cloudinary.uploader.destroy(zip_file.zip_file.public_id)
-                    
-            folder.delete()
-            messages.success(request, 'Folder deleted successfully!')
-            
-        return redirect('folders:view_edit')
-    
-    # Get search query
-    search_query = request.GET.get('search', '').strip()
-    
-    # Get all folders for the logged-in photographer with optional search
-    folders = Folder.objects.filter(owner=request.user)
-    if search_query:
-        folders = folders.filter(
-            Q(name__icontains=search_query) |
-            Q(description__icontains=search_query)
-        )
-    folders = folders.order_by('-created_at')
-    
-    # Prepare folder data with additional information
-    folders_data = []
-    for folder in folders:
-        folder_data = {
-            'id': folder.id,
-            'name': folder.name,
-            'created_at': folder.created_at,
-            'description': folder.description,
-            'total_files': (
-                UploadFile.objects.filter(folder=folder).count() +
-                UploadZip.objects.filter(folder=folder).count()
-            ),
-            'total_size': get_folder_size(folder)
-        }
-        folders_data.append(folder_data)
-    
+                # Assign the Cloudinary resource
+                zip_instance.zip_file = upload_result['public_id']
+                zip_instance.save()
+                
+                messages.success(request, 'ZIP file uploaded successfully')
+                return redirect('folders:p_dashboard')
+                
+            except CloudinaryError as e:
+                messages.error(request, f'Error uploading ZIP file: {str(e)}')
+            except Exception as e:
+                messages.error(request, f'Unexpected error: {str(e)}')
+    else:
+        form = UploadZipForm()
+        
     context = {
-        'folders': folders_data,
-        'has_folders': bool(folders_data),
-        'search_query': search_query
+        'form': form
     }
-    
-    # If it's an AJAX request, return JSON response
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        return JsonResponse({
-            'html': render(request, 'folders/folder_list.html', context).content.decode(),
-            'has_folders': bool(folders_data)
-        })
-    
-    return render(request, 'folders/view_edit.html', context)
+    return render(request, 'folders/upload.html', context)
