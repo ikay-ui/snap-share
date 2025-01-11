@@ -5,7 +5,6 @@
 {% endblock title %}
 
 {% block css %}
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700&display=swap');
 
 :root {
     --primary-dark: #1a1a2e;
@@ -212,7 +211,7 @@ body {
             <div class="card-preview">
                 <div class="preview-grid">
                     {% for image in favorite.folder.uploadfile_set.all|slice:":4" %}
-                        <img src="{{ image.image.url }}" alt="Preview" class="preview-image">
+                        <img src="{{ image.get_image_url }}" alt="Preview" class="preview-image">
                     {% empty %}
                         <div class="preview-image" style="background: rgba(255,255,255,0.05);">
                             <i class="fas fa-image"></i>
