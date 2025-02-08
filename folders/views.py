@@ -78,7 +78,7 @@ def upload_images(request):
 @photographer_required
 def upload_file(request):
     if request.method == 'POST':
-        form = UploadFileForm(request.POST, request.FILES)
+        form = UploadFileForm(user=request.user, data=request.POST, files=request.FILES)
         if form.is_valid():
             folder = form.cleaned_data['folder']
             files = request.FILES.getlist('images')
@@ -121,7 +121,7 @@ def upload_file(request):
                 
             return redirect('photo_template:p_dashboard')
     else:
-        form = UploadFileForm()
+        form = UploadFileForm(user=request.user)
 
     context = {
         'form': form
@@ -132,7 +132,7 @@ def upload_file(request):
 @photographer_required
 def upload_zip(request):
     if request.method == 'POST':
-        form = UploadZipForm(request.POST, request.FILES)
+        form = UploadZipForm(user=request.user, data=request.POST, files=request.FILES)
         if form.is_valid():
             try:
                 # Create but don't save the instance yet
@@ -158,7 +158,7 @@ def upload_zip(request):
             except Exception as e:
                 messages.error(request, f'Unexpected error: {str(e)}')
     else:
-        form = UploadZipForm()
+        form = UploadZipForm(user=request.user)
         
     context = {
         'form': form
@@ -299,3 +299,34 @@ def view_edit(request):
         })
     
     return render(request, 'folders/view_edit.html', context)
+
+@login_required
+@photographer_required
+def view_folder(request, folder_id):
+    folder = get_object_or_404(Folder, id=folder_id)
+    
+    # Verify ownership
+    if folder.owner != request.user:
+        raise PermissionDenied
+    
+    if request.method == "POST" and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        image_id = request.POST.get('image_id')
+        try:
+            image = UploadFile.objects.get(id=image_id, folder=folder)
+            # Delete from Cloudinary
+            cloudinary.uploader.destroy(image.image.public_id)
+            # Delete from database
+            image.delete()
+            return JsonResponse({'status': 'success', 'message': 'Image deleted successfully'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+    
+    # Get all images for this folder
+    images = UploadFile.objects.filter(folder=folder).order_by('-date_added')
+    
+    context = {
+        'folder': folder,
+        'images': images,
+        'total_images': images.count()
+    }
+    return render(request, 'folders/view_folder.html', context)

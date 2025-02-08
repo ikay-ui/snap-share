@@ -5,8 +5,6 @@
 {% endblock title %}
 
 {% block css %}
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
-
 :root {
     --primary: #4a90e2;
     --secondary: #f8f9fa;
@@ -262,6 +260,9 @@ body {
                         </div>
                     </div>
                     <div class="folder-actions">
+                        <a href="{% url 'folders:view_folder' folder.id %}" class="btn-action text-decoration-none">
+                            <i class="fas fa-eye"></i>View
+                        </a>
                         <button class="btn-action edit-folder" data-folder-id="{{ folder.id }}">
                             <i class="fas fa-edit"></i>Edit
                         </button>

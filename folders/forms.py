@@ -1,7 +1,5 @@
 from django import forms
-
 from folders.models import Folder, UploadZip
-
 
 class FolderCreationForm(forms.ModelForm):
     class Meta:
@@ -12,13 +10,12 @@ class FolderCreationForm(forms.ModelForm):
         ]
     name = forms.CharField(
         max_length=255,
-        required=True,  # This makes the field required
+        required=True,
         widget=forms.TextInput(attrs={
             'class': 'form-control',
             'placeholder': 'Folder Name',
         })
     )
-    
     
     description = forms.CharField(
         widget=forms.Textarea(attrs={
@@ -26,10 +23,8 @@ class FolderCreationForm(forms.ModelForm):
             'rows': 4,
             'placeholder': 'Folder Description(optional)'
         }),
-        required=False  # This makes the field optional
+        required=False
     )
-    
-    
 
 class MultipleFileInput(forms.ClearableFileInput):
     allow_multiple_selected = True
@@ -37,8 +32,8 @@ class MultipleFileInput(forms.ClearableFileInput):
 class MultipleFileField(forms.FileField):
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("widget", MultipleFileInput(attrs={
-            'class': 'form-control',  # Add your custom class here
-            'style': 'margin-bottom: 1rem;',  # Add any inline styles here
+            'class': 'form-control',
+            'style': 'margin-bottom: 1rem;',
         }))
         super().__init__(*args, **kwargs)
 
@@ -52,25 +47,27 @@ class MultipleFileField(forms.FileField):
 
 class UploadFileForm(forms.Form):
     folder = forms.ModelChoiceField(
-        queryset=Folder.objects.all(),
+        queryset=Folder.objects.none(),  # Start with empty queryset
         required=True,
         widget=forms.Select(attrs={
-            'class': 'form-control form-select fw-bold',  # Add your custom class here
-            'style': 'margin-bottom: 1rem;',  # Add any inline styles here
+            'class': 'form-control form-select fw-bold',
+            'style': 'margin-bottom: 1rem;',
         })
     )
     images = MultipleFileField(
         required=True,
         widget=MultipleFileInput(attrs={
-            'class': 'form-control',  # Add your custom class here
-            'style': 'margin-bottom: 1rem;',  # Add any inline styles here
+            'class': 'form-control',
+            'style': 'margin-bottom: 1rem;',
         })
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, user=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        if user:
+            # Filter folders to show only those owned by the current user
+            self.fields['folder'].queryset = Folder.objects.filter(owner=user)
         self.fields['folder'].choices = [('', 'Select a folder')] + list(self.fields['folder'].choices)
-        
         
 class UploadZipForm(forms.ModelForm):
     class Meta:
@@ -90,6 +87,9 @@ class UploadZipForm(forms.ModelForm):
             'zip_file': 'Choose Zip File',
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, user=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        if user:
+            # Filter folders to show only those owned by the current user
+            self.fields['folder'].queryset = Folder.objects.filter(owner=user)
         self.fields['folder'].choices = [('', 'Select a folder')] + list(self.fields['folder'].choices)

@@ -1,0 +1,212 @@
+{% extends 'photo_template/base.html' %}
+
+{% block title %}
+    View Folder: {{ folder.name }} - SnapShare
+{% endblock title %}
+
+{% block css %}
+.image-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+    padding: 1rem;
+}
+
+@media (max-width: 768px) {
+    .image-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 0.5rem;
+        padding: 0.5rem;
+    }
+}
+
+.image-card {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.image-container {
+    position: relative;
+    padding-top: 100%;
+    overflow: hidden;
+}
+
+.image-container img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.image-card:hover img {
+    transform: scale(1.05);
+}
+
+.image-actions {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    opacity: 1; /* Always visible now */
+    transition: background-color 0.3s ease;
+}
+
+/* Remove hover opacity for better mobile experience */
+.image-card:hover .image-actions {
+    opacity: 1;
+}
+
+.btn-delete-image {
+    background: rgba(220, 38, 38, 0.9);
+    color: white;
+    border: none;
+    padding: 0.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    /* Make button more touchable on mobile */
+    min-width: 2.5rem;
+    min-height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-delete-image:hover {
+    background: rgb(220, 38, 38);
+}
+
+/* Add touch-friendly tap state for mobile */
+.btn-delete-image:active {
+    transform: scale(0.95);
+    background: rgb(185, 28, 28);
+}
+
+.folder-header {
+    padding: 1.5rem;
+    background: white;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+@media (max-width: 768px) {
+    .folder-header {
+        padding: 1rem;
+    }
+    
+    .folder-title {
+        font-size: 1.5rem !important;
+    }
+    
+    .folder-meta {
+        flex-direction: column;
+        gap: 0.5rem !important;
+        align-items: flex-start !important;
+    }
+}
+
+.folder-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(45deg, var(--primary), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.folder-meta {
+    color: var(--text-secondary);
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 2rem;
+    background: var(--secondary);
+    border-radius: 16px;
+    margin: 1rem;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    color: var(--primary);
+    margin-bottom: 1rem;
+}
+{% endblock css %}
+
+{% block content %}
+<div class="folder-header">
+    <h1 class="folder-title">{{ folder.name }}</h1>
+    <div class="folder-meta">
+        <span><i class="fas fa-image"></i> {{ total_images }} images</span>
+        <span><i class="fas fa-calendar"></i> Created {{ folder.created_at|date:"F d, Y" }}</span>
+    </div>
+</div>
+
+{% if images %}
+<div class="image-grid">
+    {% for image in images %}
+    <div class="image-card" id="image-{{ image.id }}">
+        <div class="image-container">
+            <img src="{{ image.get_image_url }}" alt="Uploaded image">
+            <div class="image-actions">
+                <button class="btn-delete-image" onclick="deleteImage({{ image.id }})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <i class="fas fa-images"></i>
+    <h3>No images yet</h3>
+    <p>Upload some images to get started</p>
+    <a href="{% url 'folders:upload_file' %}" class="btn-action">
+        <i class="fas fa-upload"></i> Upload Images
+    </a>
+</div>
+{% endif %}
+
+<script>
+function deleteImage(imageId) {
+    if (confirm('Are you sure you want to delete this image? This action cannot be undone.')) {
+        fetch('', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: new URLSearchParams({
+                'image_id': imageId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // Remove the image card from DOM
+                document.getElementById(`image-${imageId}`).remove();
+                // Update total images count
+                const totalImages = document.querySelectorAll('.image-card').length;
+                if (totalImages === 0) {
+                    location.reload(); // Reload to show empty state
+                }
+            } else {
+                alert('Error deleting image: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Error deleting image: ' + error);
+        });
+    }
+}
+</script>
+{% endblock content %}

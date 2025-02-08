@@ -13,4 +13,5 @@ urlpatterns = [
     path('upload_file/', views.upload_file, name='upload_file'),
     path('upload_zip/', views.upload_zip, name='upload_zip'),
     path('view_edit_folder/', views.view_edit, name='view_edit'),
+    path('view_folder/<int:folder_id>/', views.view_folder, name='view_folder'),
 ]
